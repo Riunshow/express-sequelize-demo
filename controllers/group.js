@@ -70,7 +70,7 @@ class Group {
     try {
       const group_data = await groupModel.findOne({
         where: {
-          groupId
+          id: groupId
         }
       })
       if (!group_data) {
@@ -87,10 +87,23 @@ class Group {
         }
       })
 
-      
+      const result = await user_data.addGroup(group_data)
+
+      console.log('-----', result)
+
+      res.send({
+        success: true
+      })
+
       
     } catch (error) {
-      
+      log.error(error.message, error)
+      res.send({
+        success: false,
+        code: -1,
+        message: error.message
+      })
+      return
     }
 
   }
