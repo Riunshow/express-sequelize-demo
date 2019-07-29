@@ -1,6 +1,6 @@
 {
-  "name": "iteration",
-  "version": "0.0.1",
+  "name": "express-sequelize-demo",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "set NODE_ENV=development && supervisor --harmony app.js",

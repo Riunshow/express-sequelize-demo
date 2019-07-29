@@ -1,5 +1,5 @@
 const userModel = require('../models').User
-const groupModel = require('../models/group').Group
+const groupModel = require('../models').Group
 const moment = require('moment')
 const log = require('log4js').getLogger('user')
 
@@ -78,8 +78,7 @@ class User {
       }
       await userModel.create(newData)
       res.send({
-        success: true,
-        code: 200
+        success: true
       })
     } catch (err) {
       log.error(err.message, err)
@@ -155,13 +154,15 @@ class User {
             username
           },
         })
+        const group_data = await user_data_update.getGroups()
         res.send({
           success: true,
           data: {
             userId: user_data_update.id,
             name: user_data_update.name,
             email: user_data_update.email,
-            token: user_data_update.token
+            token: user_data_update.token,
+            groups: group_data
           },
         })
       }
@@ -202,19 +203,47 @@ class User {
       })
       res.send({
         success: true,
-        status: 200,
         message: '退出成功'
       })
     } catch (err) {
       log.error(err.message, err)
-      res.send({
+      return res.send({
         success: false,
         code: -1,
         message: '退出失败'
       })
-      return
     }
   }
+
+  // 根据 group code 获取用户列表
+  async getUserListByGroup(req, res, next) {
+    const { group } = req.query
+
+    try {
+      const group_data = await groupModel.findOne({
+        where: {
+          code: group
+        }
+      })
+      const data = await group_data.getUsers({
+        attributes: ['id', 'username', 'name', 'email', 'createdAt', 'updatedAt']
+      })
+
+      res.send({
+        success: true,
+        data
+      })
+    } catch (error) {
+      log.error(error.message, error)
+      return res.send({
+        success: false,
+        code: -1,
+        message: error.message
+      })
+    }
+  }
+
+  
 }
 
 module.exports = new User()

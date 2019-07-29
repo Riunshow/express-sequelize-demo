@@ -3,13 +3,13 @@ const groupModel = require('../models').Group
 const log = require('log4js').getLogger('group')
 
 const {
-  getToken,
-  generateToken
+  getToken
 } = require('../utils/token')
 
 class Group {
   constructor() {}
 
+  // 创建分组
   async createGroup(req, res, next) {
     const { code, name } = req.body
     try {
@@ -48,21 +48,20 @@ class Group {
         })
       } else {
         res.send({
-          success: true,
-          code: 200
+          success: true
         })
       }
     } catch (error) {
       log.error(error.message, error)
-      res.send({
+      return res.send({
         success: false,
         code: -1,
         message: error.message
       })
-      return
     }
   }
 
+  // 给用户设置分组
   async setGroupForUser(req, res, next) {
     const { groupId } = req.body
     const token = getToken(req)
@@ -76,8 +75,8 @@ class Group {
       if (!group_data) {
         res.send({
           success: false,
-          status: 401,
-          message: '用户不存在'
+          code: 401,
+          message: '分组不存在'
         })
         return
       }
@@ -89,23 +88,80 @@ class Group {
 
       const result = await user_data.addGroup(group_data)
 
-      console.log('-----', result)
+      if (!result) {
+        res.send({
+          success: false,
+          code: -1,
+          message: '该分组已经存在该用户'
+        })
+        return
+      }
 
       res.send({
         success: true
       })
-
-      
     } catch (error) {
       log.error(error.message, error)
-      res.send({
+      return res.send({
         success: false,
         code: -1,
         message: error.message
       })
-      return
     }
+  }
 
+  // 查询全部分组
+  async getAllGroup(req, res, next) {
+    try {
+      const data = await groupModel.findAll()
+      res.send({
+        success: true,
+        data
+      })
+    } catch (error) {
+      log.error(error.message, error)
+      return res.send({
+        success: false,
+        code: -1,
+        message: error.message
+      })
+    }
+  }
+
+  // 把某个用户从某分组删除
+  async deleteUserFromGroup(req, res, next) {
+    const { userId, groupId } = req.body
+
+    try {
+      const user_data = await userModel.findOne({
+        where: {
+          id: userId
+        }
+      })
+      const group_data = await groupModel.findOne({
+        where: {
+          id: groupId
+        }
+      })
+      if (!user_data || !group_data) {
+        return res.send({
+          success: false,
+          code: 400,
+          message: '用户或分组不存在'
+        })
+      }
+      const data = await group_data.removeUser(user_data)
+      res.send({
+        success: true
+      })
+    } catch (error) {
+      log.error(error.message, error)
+      return res.send({
+        success: false,
+        code: -1,
+        message: error.message
+      })
+    }
   }
 
 }
